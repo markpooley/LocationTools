@@ -41,13 +41,13 @@ AddressDict = defaultdict(list) #dictionary for storing all the geocoded address
 repeatCount = 0 #count repeats
 totalLocated = 0 #count total located
 stDict = {
-	'IA': 'Iowa'
-	'MN': 'Minnesota'
-	'WI': 'Wisconsin'
-	'IL': 'Illinois'
-	'MO': 'Missouri'
-	'NE': 'Nebraksa'
-	'SD': 'South Dakota'
+	'IA': 'Iowa',
+	'MN': 'Minnesota',
+	'WI': 'Wisconsin',
+	'IL': 'Illinois',
+	'MO': 'Missouri',
+	'NE': 'Nebraksa',
+	'SD': 'South Dakota',
 }
 
 ###################################################################################################
@@ -83,7 +83,7 @@ with arcpy.da.UpdateCursor(Locations,[MatchStatus,"X","Y",Address,city,state,zip
 				st = stDict[row[5]]
 				z = str(row[6])
 				#check that the quality is sufficient, and zip code and state match the current candidate location
-				if loc.quality >= 7 and loc.postal == z and st = loc.address.split(',')[-2].strip():
+				if loc.quality >= 7 and loc.postal == z and st == loc.address.split(',')[-2].strip():
 
 					arcpy.SetProgressorLabel('Match found for {0}'.format(addr))
 
