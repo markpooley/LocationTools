@@ -49,13 +49,7 @@ stDict = {
 	'NE': 'Nebraksa',
 	'SD': 'South Dakota',
 }
-
-###################################################################################################
-#Geocode the unlocated features using a list of geocoders - looking for the highest resoluation
-#match among them. If all the the geocoders area attempted and still no good match is found, then
-#the entry will remain unlocated
-###################################################################################################
-
+qualList = ['StreetName','StreetAddress','PointAddress'] #list of acceptable goecoding resolution qualities
 ###################################################################################################
 #Geocode the unlocated features using a list of geocoders - looking for the highest resoluation
 #match among them. If all the the geocoders area attempted and still no good match is found, then
@@ -63,14 +57,14 @@ stDict = {
 ###################################################################################################
 
 featureCount = int(arcpy.GetCount_management(Locations).getOutput(0))
-located = 0
+
 arcpy.SetProgressor('step','finding locations with city address type...',0,featureCount,1)
 with arcpy.da.UpdateCursor(Locations,[MatchStatus,"X","Y",Address,city,state,zipCode,MatchAddress,"Addr_type"]) as cursor:
 	for row in cursor:
 
 		#check if row has unmatched status
 		if row[0] == 'U':
-			addr = row[3] + ", " + row[4] + " " + row[5] + ' ' + str(row[6])
+			addr = "{0}, {1} {2} {3}".format(row[3], row[4], row[5], int(row[6]))
 
 			#-------------------------------------------------------------------------------------------
 			#Check if the current address is in the dictionary. If it isn't, go ahead and geocode it.
@@ -83,7 +77,7 @@ with arcpy.da.UpdateCursor(Locations,[MatchStatus,"X","Y",Address,city,state,zip
 				st = stDict[row[5]]
 				z = str(row[6])
 				#check that the quality is sufficient, and zip code and state match the current candidate location
-				if loc.quality >= 7 and loc.postal == z and st == loc.address.split(',')[-2].strip():
+				if loc.quality in qualList: #and loc.postal == z: #and st == loc.address.split(',')[-2].strip():
 
 					arcpy.SetProgressorLabel('Match found for {0}'.format(addr))
 
@@ -98,9 +92,9 @@ with arcpy.da.UpdateCursor(Locations,[MatchStatus,"X","Y",Address,city,state,zip
 					#add geocoded address to dictionary with long and lat using the 'extend' method
 					AddressDict[addr].extend((loc.address,loc.lat,loc.lng,loc.quality))
 					arcpy.SetProgressorLabel('found correct address for: {0}'.format(addr))
-
+					totalLocated += 1
 				else:
-					arcpy.AddMessage('no suitable address was found for {0}'.format(addr))
+					arcpy.AddMessage('no suitable address was found for {0}'.format(loc.address))
 					pass
 
 			#If first for loop not entered, then the address is a repeat. Simply use the
@@ -119,7 +113,7 @@ with arcpy.da.UpdateCursor(Locations,[MatchStatus,"X","Y",Address,city,state,zip
 				arcpy.SetProgressorLabel('Match found for {0}'.format(AddressDict[addr]))
 				repeatCount += 1 #update the number of repeats found
 
-			totalLocated += 1 #update the total located number
+				totalLocated += 1 #update the total located number
 
 		#simply pass rows that have been located
 		else:
